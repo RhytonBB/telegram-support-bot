@@ -33,16 +33,18 @@ def static_files(path):
 
 
 @app_flask.route("/api/messages/<int:ticket_id>", methods=["GET"])
+@app_flask.route("/api/messages/<int:ticket_id>", methods=["GET"])
 def get_messages(ticket_id):
+    print("ticket_id:", ticket_id)
     ticket = db.get_ticket_by_id(ticket_id)
+    print("ticket:", ticket)
     if not ticket:
-        return jsonify({"error": "Ticket not found"}), 404
+        return jsonify({"error": f"Ticket {ticket_id} not found"}), 404
 
     messages = db.get_messages_by_ticket(ticket_id)
-    if messages is None:
-        messages = []
+    print("messages:", messages)
+    return jsonify(messages or [])
 
-    return jsonify(messages)
 
 
 @app_flask.route("/api/messages/<int:ticket_id>", methods=["POST"])
