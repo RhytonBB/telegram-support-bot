@@ -3,33 +3,31 @@ from . import db, config
 
 app = Flask(__name__)
 
-def chat():
-    return send_from_directory(os.path.join(WEB_DIR, 'chat'), 'index.html')
-    
-# Проверка Telegram ID и обращения
-def check_access(tg_id: str, ticket_id: int) -> bool:
-    # Здесь проверяем, что обращение принадлежит пользователю с tg_id
-    ticket = db.get_ticket_by_id(ticket_id)
-    return ticket and str(ticket['tg_id']) == tg_id
+# Убираем функцию check_access, она больше не нужна
 
 @app.route("/api/messages/<int:ticket_id>", methods=["GET"])
 def get_messages(ticket_id):
-    tg_id = request.args.get("tg_id")
-    if not tg_id or not check_access(tg_id, ticket_id):
-        abort(403)
+    # tg_id теперь не проверяется
     messages = db.get_messages_by_ticket(ticket_id)
+    if messages is None:
+        abort(404)  # если тикет не найден или сообщений нет
     return jsonify(messages)
 
 @app.route("/api/messages/<int:ticket_id>", methods=["POST"])
 def post_message(ticket_id):
-    tg_id = request.args.get("tg_id")
-    if not tg_id or not check_access(tg_id, ticket_id):
-        abort(403)
+    # tg_id не проверяем
     data = request.json
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
+
     text = data.get("text", "").strip()
     if not text:
         return jsonify({"error": "Empty message"}), 400
+
     # Сохраняем сообщение
+    # Для совместимости, если нужно tg_id, можно брать из data или None
+    tg_id = data.get("tg_id", None)
+
     db.save_message(ticket_id, tg_id, text)
     return jsonify({"status": "ok"}), 201
 
