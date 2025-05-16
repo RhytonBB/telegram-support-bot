@@ -5,7 +5,7 @@
   async function loadMessages() {
     const res = await fetch(`/api/messages/${ticketId}`);
     if (!res.ok) {
-      alert("Ошибка загрузки сообщений");
+      alert("Ошибка загрузки сообщений №${ticketId}");
       return;
     }
     const messages = await res.json();
