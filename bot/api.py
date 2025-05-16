@@ -3,6 +3,9 @@ from . import db, config
 
 app = Flask(__name__)
 
+def chat():
+    return send_from_directory(os.path.join(WEB_DIR, 'chat'), 'index.html')
+    
 # Проверка Telegram ID и обращения
 def check_access(tg_id: str, ticket_id: int) -> bool:
     # Здесь проверяем, что обращение принадлежит пользователю с tg_id
