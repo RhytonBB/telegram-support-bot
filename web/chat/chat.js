@@ -14,7 +14,7 @@ async function loadMessages() {
   messages.forEach(msg => {
     const div = document.createElement("div");
     div.className = msg.sender === "user" ? "msg user" : "msg support";
-    div.textContent = msg.message;
+    div.textContent = msg.content;  // исправлено на msg.content, т.к. в бэкенде key "content"
     messagesDiv.appendChild(div);
   });
 
@@ -35,12 +35,17 @@ async function sendMessage(text) {
   }
 }
 
-document.getElementById("send-btn").addEventListener("click", () => {
-  const input = document.getElementById("message-input");
-  const text = input.value.trim();
-  if (!text) return;
-  sendMessage(text);
-  input.value = "";
-});
+window.addEventListener("DOMContentLoaded", () => {
+  loadMessages();
 
-window.addEventListener("DOMContentLoaded", loadMessages);
+  const sendBtn = document.getElementById("send-btn");
+  if (sendBtn) {
+    sendBtn.addEventListener("click", () => {
+      const input = document.getElementById("message-input");
+      const text = input.value.trim();
+      if (!text) return;
+      sendMessage(text);
+      input.value = "";
+    });
+  }
+});
