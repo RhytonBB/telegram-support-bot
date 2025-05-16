@@ -33,10 +33,8 @@ def chat_static(filename):
 
 @app_flask.route("/api/messages/<int:ticket_id>")
 def get_messages(ticket_id):
-    tg_id = request.args.get("tg_id")
     ticket = db.get_ticket_by_id(ticket_id)
-    if not ticket or ticket["user_tg_id"] != tg_id:
-        return jsonify({"error": "Unauthorized"}), 403
+    
 
 
 
