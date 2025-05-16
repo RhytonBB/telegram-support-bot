@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Панель оператора</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div class="header">
+  <h2>Панель оператора</h2>
+  <button id="logout-btn">Выйти</button>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="new">Новые обращения</button>
+  <button class="tab-btn" data-tab="active">Текущие</button>
+  <button class="tab-btn" data-tab="archived">Архив</button>
+</div>
+
+<div class="content">
+  <div id="new" class="tab-content active">
+    <ul id="new-tickets-list"></ul>
+  </div>
+  <div id="active" class="tab-content">
+    <ul id="active-tickets-list"></ul>
+  </div>
+  <div id="archived" class="tab-content">
+    <ul id="archived-tickets-list"></ul>
+  </div>
+</div>
+
+<div class="chat-area">
+  <div id="chat-tabs"></div>
+  <div id="chat-windows"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
