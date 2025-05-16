@@ -19,6 +19,10 @@ def index():
 def operators():
     return send_from_directory(WEB_DIR, 'operators.html')
 
+@app_flask.route('/chat.html')
+def chat():
+    return send_from_directory(WEB_DIR, 'chat.html')
+
 @app_flask.route('/<path:path>')
 def static_files(path):
     return send_from_directory(WEB_DIR, path)

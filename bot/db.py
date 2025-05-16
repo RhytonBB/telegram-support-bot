@@ -62,3 +62,21 @@ def get_archived_tickets(user_id: int) -> list[tuple[int, str]]:
 def generate_chat_url(user_id: int, ticket_id: int) -> str:
     return f"{BASE_CHAT_URL}/chat?uid={user_id}&ticket_id={ticket_id}"
 
+def get_ticket_by_id(ticket_id):
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,))
+    return cursor.fetchone()
+
+def get_messages_by_ticket(ticket_id):
+    cursor = conn.cursor()
+    cursor.execute("SELECT sender_tg_id, message, timestamp FROM messages WHERE ticket_id = ? ORDER BY timestamp", (ticket_id,))
+    rows = cursor.fetchall()
+    return [{"sender_tg_id": r[0], "message": r[1], "timestamp": r[2]} for r in rows]
+
+def save_message(ticket_id, tg_id, text):
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO messages (ticket_id, sender_tg_id, message) VALUES (?, ?, ?)",
+        (ticket_id, tg_id, text)
+    )
+    conn.commit()
