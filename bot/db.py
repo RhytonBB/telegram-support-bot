@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+from .config import BASE_CHAT_URL
 
 DB_PATH = Path(__file__).parent.parent / "database" / "support.db"
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -59,6 +60,5 @@ def get_archived_tickets(user_id: int) -> list[tuple[int, str]]:
         return [(row[0], generate_chat_url(user_id, row[0])) for row in rows]
 
 def generate_chat_url(user_id: int, ticket_id: int) -> str:
-    # При деплое на Netlify URL можно будет подменить через config
-    base_url = "https://example-support-panel.netlify.app"
-    return f"{base_url}/chat?uid={user_id}&ticket_id={ticket_id}"
+    return f"{BASE_CHAT_URL}/chat?uid={user_id}&ticket_id={ticket_id}"
+
