@@ -1,121 +1,115 @@
-// Получить Telegram ID из параметров URL
-function getTelegramId() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get("tg_id");
-  }
-  
-  // Показываем / скрываем элементы
-  function showElement(id) {
-    document.getElementById(id).style.display = "block";
-  }
-  function hideElement(id) {
-    document.getElementById(id).style.display = "none";
-  }
-  
-  // Проверка пользователя (имитация, тут будет запрос к серверу для проверки)
-  async function checkUser(tgId) {
-    // Тут будет API-запрос к серверу, пока просто имитируем разрешенный ID для примера
-    // Можно отправить fetch к своему API с проверкой
-    return tgId && tgId.length > 0; // например, любой непустой tg_id пропускаем
-  }
-  
-  async function initChat() {
-    const tgId = getTelegramId();
-  
-    const authorized = await checkUser(tgId);
-  
-    if (!authorized) {
-      showElement("auth-error");
-      hideElement("chat-content");
-      return;
-    }
-  
-    showElement("chat-content");
-    hideElement("auth-error");
-  
-    // TODO: загрузка сообщений из API (пока заглушка)
-    const messagesDiv = document.getElementById("messages");
-    messagesDiv.innerHTML = `<div class="msg user">Привет! Это тестовое сообщение.</div>`;
-  
-    // Отправка сообщения
-    document.getElementById("send-btn").addEventListener("click", () => {
-      const input = document.getElementById("message-input");
-      const text = input.value.trim();
-      if (!text) return;
-  
-      // TODO: отправить на сервер
-  
-      // Отображаем локально
-      const msgDiv = document.createElement("div");
-      msgDiv.className = "msg user";
-      msgDiv.textContent = text;
-      messagesDiv.appendChild(msgDiv);
-  
-      input.value = "";
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-  }
-  
-  window.addEventListener("DOMContentLoaded", initChat);
+const urlParams = new URLSearchParams(window.location.search);
+const ticketId = urlParams.get("ticket_id");
+const tgId = urlParams.get("tg_id");
 
-  const ticketId = new URLSearchParams(window.location.search).get("ticket_id");
-  const tgId = new URLSearchParams(window.location.search).get("tg_id");
-  
-  async function checkUser() {
-    // Проверка доступа к обращению
-    const res = await fetch(`/api/messages/${ticketId}?tg_id=${tgId}`, { method: "GET" });
-    return res.ok;
+async function checkAccess() {
+  const res = await fetch(`/api/messages/${ticketId}?tg_id=${tgId}`, { method: "GET" });
+  return res.ok;
+}
+
+function renderMessage(msg) {
+  const div = document.createElement("div");
+  div.className = msg.sender_tg_id == tgId ? "msg user" : "msg support";
+
+  // Текст сообщения
+  if (msg.message) {
+    const text = document.createElement("div");
+    text.textContent = msg.message;
+    div.appendChild(text);
   }
-  
-  async function loadMessages() {
-    const res = await fetch(`/api/messages/${ticketId}?tg_id=${tgId}`);
-    if (!res.ok) return;
-    const messages = await res.json();
-    const messagesDiv = document.getElementById("messages");
-    messagesDiv.innerHTML = "";
-    messages.forEach(msg => {
-      const div = document.createElement("div");
-      div.className = msg.sender_tg_id == tgId ? "msg user" : "msg support";
-      div.textContent = msg.message;
-      messagesDiv.appendChild(div);
-    });
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
-  
-  async function sendMessage(text) {
-    const res = await fetch(`/api/messages/${ticketId}?tg_id=${tgId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    return res.ok;
-  }
-  
-  async function initChat() {
-    const authorized = await checkUser();
-    if (!authorized) {
-      document.getElementById("auth-error").style.display = "block";
-      document.getElementById("chat-content").style.display = "none";
-      return;
+
+  // Вложения
+  if (msg.attachment_url && msg.attachment_type) {
+    const url = msg.attachment_url;
+    const type = msg.attachment_type;
+
+    if (type.startsWith("image/")) {
+      const img = document.createElement("img");
+      img.src = url;
+      img.alt = "Изображение";
+      img.style.maxWidth = "100%";
+      div.appendChild(img);
+    } else if (type.startsWith("video/")) {
+      const video = document.createElement("video");
+      video.src = url;
+      video.controls = true;
+      video.style.maxWidth = "100%";
+      div.appendChild(video);
+    } else {
+      const link = document.createElement("a");
+      link.href = url;
+      link.textContent = "Скачать файл";
+      link.target = "_blank";
+      div.appendChild(link);
     }
-    document.getElementById("auth-error").style.display = "none";
-    document.getElementById("chat-content").style.display = "block";
-  
-    await loadMessages();
-  
-    document.getElementById("send-btn").onclick = async () => {
-      const input = document.getElementById("message-input");
-      const text = input.value.trim();
-      if (!text) return;
-      const ok = await sendMessage(text);
-      if (ok) {
-        input.value = "";
-        await loadMessages();
-      } else {
-        alert("Ошибка отправки сообщения");
-      }
-    };
   }
-  
-  window.addEventListener("DOMContentLoaded", initChat);
-  
+
+  return div;
+}
+
+async function loadMessages() {
+  const res = await fetch(`/api/messages/${ticketId}?tg_id=${tgId}`);
+  if (!res.ok) return;
+
+  const messages = await res.json();
+  const messagesDiv = document.getElementById("messages");
+  messagesDiv.innerHTML = "";
+
+  messages.forEach(msg => {
+    const messageDiv = renderMessage(msg);
+    messagesDiv.appendChild(messageDiv);
+  });
+
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+async function sendMessage(text, file) {
+  const formData = new FormData();
+  if (text) formData.append("text", text);
+  if (file) formData.append("file", file);
+
+  const res = await fetch(`/api/messages/${ticketId}?tg_id=${tgId}`, {
+    method: "POST",
+    body: formData
+  });
+
+  return res.ok;
+}
+
+async function initChat() {
+  const authorized = await checkAccess();
+  const authError = document.getElementById("auth-error");
+  const chatContent = document.getElementById("chat-content");
+
+  if (!authorized) {
+    authError.style.display = "block";
+    chatContent.style.display = "none";
+    return;
+  }
+
+  authError.style.display = "none";
+  chatContent.style.display = "block";
+
+  await loadMessages();
+
+  const input = document.getElementById("message-input");
+  const fileInput = document.getElementById("file-input");
+
+  document.getElementById("send-btn").addEventListener("click", async () => {
+    const text = input.value.trim();
+    const file = fileInput.files[0] || null;
+
+    if (!text && !file) return;
+
+    const ok = await sendMessage(text, file);
+    if (ok) {
+      input.value = "";
+      fileInput.value = "";
+      await loadMessages();
+    } else {
+      alert("Ошибка отправки сообщения");
+    }
+  });
+}
+
+window.addEventListener("DOMContentLoaded", initChat);
