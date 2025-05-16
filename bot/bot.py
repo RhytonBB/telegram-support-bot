@@ -19,7 +19,7 @@ def index():
 def operators():
     return send_from_directory(WEB_DIR, 'operators.html')
 
-@app_flask.route('/chat.html')
+@app_flask.route('/chat')
 def chat():
     return send_from_directory(os.path.join(WEB_DIR, 'chat'), 'index.html')
 
