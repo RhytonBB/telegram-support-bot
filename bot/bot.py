@@ -27,6 +27,9 @@ def chat():
 def static_files(path):
     return send_from_directory(WEB_DIR, path)
 
+@app_flask.route('/chat/<path:filename>')
+def chat_static(filename):
+    return send_from_directory(os.path.join(WEB_DIR, 'chat'), filename)
 
 def run_flask():
     app_flask.run(host='0.0.0.0', port=8080)
