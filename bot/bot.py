@@ -21,7 +21,7 @@ def operators():
 
 @app_flask.route('/chat.html')
 def chat():
-    return send_from_directory(WEB_DIR, 'chat.html')
+    return send_from_directory(os.path.join(WEB_DIR, 'chat'), 'index.html')
 
 @app_flask.route('/<path:path>')
 def static_files(path):
