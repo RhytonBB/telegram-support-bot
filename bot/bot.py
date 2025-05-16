@@ -31,6 +31,15 @@ def static_files(path):
 def chat_static(filename):
     return send_from_directory(os.path.join(WEB_DIR, 'chat'), filename)
 
+@app_flask.route("/api/messages/<int:ticket_id>")
+def get_messages(ticket_id):
+    tg_id = request.args.get("tg_id")
+    ticket = db.get_ticket(ticket_id)
+    if not ticket or ticket["user_tg_id"] != tg_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+
+
 def run_flask():
     app_flask.run(host='0.0.0.0', port=8080)
 
