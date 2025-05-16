@@ -7,7 +7,6 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes, CallbackQueryHandler, CommandHandler
 
 from .db import create_ticket, get_archived_tickets, generate_chat_url
-from .config import BASE_CHAT_URL
 
 
 async def support_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

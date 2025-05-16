@@ -1,9 +1,8 @@
 import logging
 import threading
 from telegram.ext import ApplicationBuilder, CommandHandler
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request, jsonify
 import os
-from flask import Flask, request, jsonify 
 from . import config, db, handlers
 
 # === Flask-сервер для отдачи веб-интерфейса ===
@@ -11,31 +10,55 @@ from . import config, db, handlers
 app_flask = Flask(__name__)
 WEB_DIR = os.path.join(os.path.dirname(__file__), '..', 'web')
 
+
 @app_flask.route('/')
 def index():
     return send_from_directory(WEB_DIR, 'index.html')
+
 
 @app_flask.route('/operators.html')
 def operators():
     return send_from_directory(WEB_DIR, 'operators.html')
 
-@app_flask.route('/chat')
-def chat():
-    return send_from_directory(os.path.join(WEB_DIR, 'chat'), 'index.html')
+
+@app_flask.route('/chat/', defaults={'filename': 'index.html'})
+@app_flask.route('/chat/<path:filename>')
+def chat_static(filename):
+    return send_from_directory(os.path.join(WEB_DIR, 'chat'), filename)
+
 
 @app_flask.route('/<path:path>')
 def static_files(path):
     return send_from_directory(WEB_DIR, path)
 
-@app_flask.route('/chat/<path:filename>')
-def chat_static(filename):
-    return send_from_directory(os.path.join(WEB_DIR, 'chat'), filename)
 
-@app_flask.route("/api/messages/<int:ticket_id>")
+@app_flask.route("/api/messages/<int:ticket_id>", methods=["GET"])
 def get_messages(ticket_id):
     ticket = db.get_ticket_by_id(ticket_id)
-    
+    if not ticket:
+        return jsonify({"error": "Ticket not found"}), 404
 
+    messages = db.get_messages_by_ticket(ticket_id)
+    if messages is None:
+        messages = []
+
+    return jsonify(messages)
+
+
+@app_flask.route("/api/messages/<int:ticket_id>", methods=["POST"])
+def post_message(ticket_id):
+    data = request.json
+    if not data or "text" not in data:
+        return jsonify({"error": "Missing or invalid JSON body"}), 400
+
+    text = data["text"].strip()
+    if not text:
+        return jsonify({"error": "Empty message"}), 400
+
+    tg_id = data.get("tg_id", None)
+
+    db.save_message(ticket_id, tg_id, text)
+    return jsonify({"status": "ok"}), 201
 
 
 def run_flask():
