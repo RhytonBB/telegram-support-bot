@@ -1,7 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler, CommandHandler
 from telegram.constants import ParseMode
-from .db import create_ticket, generate_chat_url
+from .db import create_ticket
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
@@ -19,6 +19,9 @@ async def create_ticket_callback(update: Update, context: ContextTypes.DEFAULT_T
     
     user_id = query.from_user.id
     ticket_id = create_ticket(user_id)
+    
+    # Получаем URL чата из базы данных
+    from .db import generate_chat_url
     chat_url = generate_chat_url(ticket_id)
     
     await query.edit_message_text(

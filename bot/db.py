@@ -90,3 +90,8 @@ def save_message(ticket_id, sender, content, content_type):
             datetime.utcnow().isoformat()
         ))
         conn.commit()
+
+def generate_chat_url(ticket_id):
+    """Генерирует URL для чата с поддержкой"""
+    from .config import BASE_URL
+    return f"{BASE_URL}/chat/?ticket_id={ticket_id}"
