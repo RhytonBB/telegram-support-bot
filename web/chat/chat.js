@@ -1,24 +1,29 @@
 const urlParams = new URLSearchParams(window.location.search);
 const ticketId = urlParams.get("ticket_id");
-const tgId = urlParams.get("tg_id");
+// const tgId = urlParams.get("tg_id");  // Убрал получение tgId
 
 async function checkAccess() {
-  const res = await fetch(`/api/messages/${ticketId}?tg_id=${tgId}`, { method: "GET" });
+  // Убрали tg_id из запроса
+  const res = await fetch(`/api/messages/${ticketId}`, { method: "GET" });
   return res.ok;
 }
 
 function renderMessage(msg) {
   const div = document.createElement("div");
-  div.className = msg.sender_tg_id == tgId ? "msg user" : "msg support";
 
-  // Текст сообщения
+  // Здесь можно просто отличать сообщения пользователя и поддержки, если есть sender
+  // Но без tgId убрать сравнение:
+  // div.className = msg.sender_tg_id == tgId ? "msg user" : "msg support";
+  // заменим например так (если в msg есть sender — user или operator)
+  div.className = msg.sender === 'user' ? "msg user" : "msg support";
+
+  // Остальной код без изменений
   if (msg.message) {
     const text = document.createElement("div");
     text.textContent = msg.message;
     div.appendChild(text);
   }
 
-  // Вложения
   if (msg.attachment_url && msg.attachment_type) {
     const url = msg.attachment_url;
     const type = msg.attachment_type;
@@ -48,7 +53,8 @@ function renderMessage(msg) {
 }
 
 async function loadMessages() {
-  const res = await fetch(`/api/messages/${ticketId}?tg_id=${tgId}`);
+  // Убрали tg_id из запроса
+  const res = await fetch(`/api/messages/${ticketId}`);
   if (!res.ok) return;
 
   const messages = await res.json();
@@ -68,7 +74,8 @@ async function sendMessage(text, file) {
   if (text) formData.append("text", text);
   if (file) formData.append("file", file);
 
-  const res = await fetch(`/api/messages/${ticketId}?tg_id=${tgId}`, {
+  // Убрали tg_id из запроса
+  const res = await fetch(`/api/messages/${ticketId}`, {
     method: "POST",
     body: formData
   });
