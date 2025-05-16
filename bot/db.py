@@ -24,7 +24,7 @@ def init_db():
             );
         """)
 
-        # Таблица сообщений (пока не используется, но заложена на будущее)
+        # Таблица сообщений
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,20 +63,26 @@ def generate_chat_url(user_id: int, ticket_id: int) -> str:
     return f"{BASE_CHAT_URL}/chat?uid={user_id}&ticket_id={ticket_id}"
 
 def get_ticket_by_id(ticket_id):
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,))
-    return cursor.fetchone()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,))
+        return cursor.fetchone()
 
 def get_messages_by_ticket(ticket_id):
-    cursor = conn.cursor()
-    cursor.execute("SELECT sender_tg_id, message, timestamp FROM messages WHERE ticket_id = ? ORDER BY timestamp", (ticket_id,))
-    rows = cursor.fetchall()
-    return [{"sender_tg_id": r[0], "message": r[1], "timestamp": r[2]} for r in rows]
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT sender, content, timestamp FROM messages
+            WHERE ticket_id = ? ORDER BY timestamp
+        """, (ticket_id,))
+        rows = cursor.fetchall()
+        return [{"sender": r[0], "content": r[1], "timestamp": r[2]} for r in rows]
 
-def save_message(ticket_id, tg_id, text):
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO messages (ticket_id, sender_tg_id, message) VALUES (?, ?, ?)",
-        (ticket_id, tg_id, text)
-    )
-    conn.commit()
+def save_message(ticket_id, sender, text):
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO messages (ticket_id, sender, content, timestamp) VALUES (?, ?, ?, ?)",
+            (ticket_id, sender, text, datetime.utcnow().isoformat())
+        )
+        conn.commit()
