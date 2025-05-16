@@ -1,8 +1,35 @@
 import logging
+import threading
 from telegram.ext import ApplicationBuilder, CommandHandler
+from flask import Flask, send_from_directory
+import os
+
 from . import config, db, handlers
 
-print("BOT_TOKEN:", repr(config.BOT_TOKEN))
+# === Flask-сервер для отдачи веб-интерфейса ===
+
+app_flask = Flask(__name__)
+WEB_DIR = os.path.join(os.path.dirname(__file__), '..', 'web')
+
+@app_flask.route('/')
+def index():
+    return send_from_directory(WEB_DIR, 'index.html')
+
+@app_flask.route('/operators.html')
+def operators():
+    return send_from_directory(WEB_DIR, 'operators.html')
+
+@app_flask.route('/<path:path>')
+def static_files(path):
+    return send_from_directory(WEB_DIR, path)
+
+
+def run_flask():
+    app_flask.run(host='0.0.0.0', port=8080)
+
+
+# === Telegram-бот ===
+
 def main():
     # Инициализация базы данных
     db.init_db()
@@ -12,6 +39,9 @@ def main():
         level=config.LOG_LEVEL,
         format="%(asctime)s - %(levelname)s - %(message)s"
     )
+
+    # Запуск Flask в отдельном потоке
+    threading.Thread(target=run_flask, daemon=True).start()
 
     # Создание приложения Telegram
     app = ApplicationBuilder().token(config.BOT_TOKEN).build()
