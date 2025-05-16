@@ -3,7 +3,7 @@ import threading
 from telegram.ext import ApplicationBuilder, CommandHandler
 from flask import Flask, send_from_directory
 import os
-
+from flask import request
 from . import config, db, handlers
 
 # === Flask-сервер для отдачи веб-интерфейса ===
