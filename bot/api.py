@@ -13,23 +13,31 @@ def get_messages(ticket_id):
         abort(404)  # если тикет не найден или сообщений нет
     return jsonify(messages)
 
+from flask import request
+
 @app.route("/api/messages/<int:ticket_id>", methods=["POST"])
 def post_message(ticket_id):
-    # tg_id не проверяем
-    data = request.json
-    if not data:
-        return jsonify({"error": "Missing JSON body"}), 400
+    if request.content_type.startswith("application/json"):
+        data = request.json
+        if not data:
+            return jsonify({"error": "Missing JSON body"}), 400
 
-    text = data.get("text", "").strip()
+        text = data.get("text", "").strip()
+        tg_id = data.get("tg_id", None)
+
+    elif request.content_type.startswith("multipart/form-data"):
+        text = request.form.get("text", "").strip()
+        tg_id = request.form.get("tg_id", None)
+        file = request.files.get("file")
+
+        # Обработай файл (сохрани куда нужно) если нужно,
+        # сейчас только игнорируем для примера
+    else:
+        return jsonify({"error": "Unsupported Content-Type"}), 415
+
     if not text:
         return jsonify({"error": "Empty message"}), 400
 
-    # Сохраняем сообщение
-    # Для совместимости, если нужно tg_id, можно брать из data или None
-    tg_id = data.get("tg_id", None)
-
+    # Сохраняем сообщение в базу (добавь обработку файла если нужно)
     db.save_message(ticket_id, tg_id, text)
     return jsonify({"status": "ok"}), 201
-
-if __name__ == "__main__":
-    app.run(port=config.API_PORT)
