@@ -1,12 +1,13 @@
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from .config import BASE_URL
+from .config import BASE_CHAT_URL
 
 DB_PATH = Path(__file__).parent.parent / "database" / "support.db"
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 def get_connection():
+    # Для удобства работы с dict и автокоммита
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -19,9 +20,9 @@ def init_db():
             CREATE TABLE IF NOT EXISTS tickets (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                status TEXT NOT NULL DEFAULT 'new',
+                status TEXT NOT NULL DEFAULT 'new',  -- new | active | archived
                 created_at TEXT NOT NULL,
-                taken_by TEXT
+                taken_by TEXT  -- login оператора
             );
         """)
 
@@ -29,7 +30,7 @@ def init_db():
             CREATE TABLE IF NOT EXISTS messages (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 ticket_id INTEGER NOT NULL,
-                sender TEXT NOT NULL,
+                sender TEXT NOT NULL,  -- 'user' или 'operator'
                 content TEXT NOT NULL,
                 timestamp TEXT NOT NULL,
                 FOREIGN KEY (ticket_id) REFERENCES tickets(id)
@@ -60,7 +61,7 @@ def get_archived_tickets(user_id: int) -> list[tuple[int, str]]:
         return [(row["id"], generate_chat_url(user_id, row["id"])) for row in rows]
 
 def generate_chat_url(user_id: int, ticket_id: int) -> str:
-    return f"{BASE_URL}/chat/?ticket_id={ticket_id}"
+    return f"{BASE_CHAT_URL}/chat?uid={user_id}&ticket_id={ticket_id}"
 
 def get_ticket_by_id(ticket_id):
     with get_connection() as conn:
