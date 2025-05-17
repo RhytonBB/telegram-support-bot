@@ -100,7 +100,7 @@ def main():
     logging.info("Бот запущен...")
     app.run_polling()
 
-@app.route("/api/tickets")
+@app_flask.route("/api/tickets")
 def api_get_tickets():
     status = request.args.get("status", "new")
     if status not in {"new", "active", "archived"}:
