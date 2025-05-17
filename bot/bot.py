@@ -14,7 +14,7 @@ def main():
     # Инициализация базы данных
     db.init_db()
 
-    # Настройка логирования
+    # Логирование
     logging.basicConfig(
         level=config.LOG_LEVEL,
         format="%(asctime)s - %(levelname)s - %(message)s"
@@ -24,15 +24,31 @@ def main():
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
 
-    # Создание Telegram бота
-    app = ApplicationBuilder().token(config.BOT_TOKEN).build()
+    # Создание Telegram бота с обработкой конфликтов
+    application = ApplicationBuilder() \
+        .token(config.BOT_TOKEN) \
+        .post_init(post_init) \
+        .build()
 
     # Регистрация обработчиков
-    handlers.register_handlers(app)
+    handlers.register_handlers(application)
 
-    # Запуск бота
-    logging.info("Бот запущен...")
-    app.run_polling()
+    try:
+        logging.info("Бот запущен...")
+        application.run_polling(
+            allowed_updates=Update.ALL_TYPES,
+            close_loop=False,
+            stop_signals=None
+        )
+    except Conflict as e:
+        logging.error(f"Конфликт: {e}. Возможно, бот уже запущен.")
+    except Exception as e:
+        logging.error(f"Ошибка: {e}")
+
+async def post_init(application: Application):
+    """Очистка очереди обновлений при запуске"""
+    await application.bot.delete_webhook(drop_pending_updates=True)
+    logging.info("Очередь обновлений очищена")
 
 if __name__ == "__main__":
     main()

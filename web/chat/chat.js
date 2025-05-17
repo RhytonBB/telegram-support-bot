@@ -1,4 +1,29 @@
 class SupportChat {
+  // В конструкторе SupportChat добавить обработку ошибок
+async loadMessages() {
+  try {
+      const response = await fetch(`/api/messages/${this.ticketId}`);
+      if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const messages = await response.json();
+      
+      this.elements.messagesContainer.innerHTML = '';
+      
+      if (messages.length === 0) {
+          this.elements.messagesContainer.innerHTML = 
+              '<div class="no-messages">Нет сообщений. Напишите ваше обращение ниже.</div>';
+          return;
+      }
+      
+      messages.forEach(msg => this.appendMessage(msg));
+      this.scrollToBottom();
+  } catch (error) {
+      console.error('Ошибка загрузки сообщений:', error);
+      this.elements.messagesContainer.innerHTML = 
+          `<div class="error">Ошибка загрузки чата. Пожалуйста, обновите страницу.</div>`;
+  }
+}
   constructor() {
       this.ticketId = this.getTicketId();
       this.filesToUpload = [];
