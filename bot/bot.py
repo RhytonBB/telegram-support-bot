@@ -1,57 +1,57 @@
 import logging
 import threading
-from telegram.ext import ApplicationBuilder, CommandHandler, Application
-from telegram.error import Conflict
-from . import config, db, handlers, api
-from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler
+from flask import Flask, send_from_directory
+import os
+from . import config, db, handlers
+
+# Flask приложение для веб-интерфейса
+app_flask = Flask(__name__)
+WEB_DIR = os.path.join(os.path.dirname(__file__), '..', 'web')
+
+# Маршруты для статических файлов
+@app_flask.route('/')
+def index():
+    return send_from_directory(WEB_DIR, 'index.html')
+
+@app_flask.route('/operators.html')
+def operators():
+    return send_from_directory(WEB_DIR, 'operators.html')
+
+@app_flask.route('/chat/<path:filename>')
+def chat_files(filename):
+    return send_from_directory(os.path.join(WEB_DIR, 'chat'), filename)
+
+@app_flask.route('/<path:path>')
+def static_files(path):
+    return send_from_directory(WEB_DIR, path)
 
 def run_flask():
-    api.app.run(
+    app_flask.run(
         host=config.FLASK_HOST,
         port=config.FLASK_PORT,
         debug=config.FLASK_DEBUG
     )
 
-async def post_init(application: Application):
-    """Очистка очереди обновлений при запуске"""
-    await application.bot.delete_webhook(drop_pending_updates=True)
-    logging.info("Очередь обновлений очищена")
-
 def main():
-    # Инициализация базы данных
+    # Инициализация
     db.init_db()
-
-    # Настройка логирования
+    
     logging.basicConfig(
         level=config.LOG_LEVEL,
         format="%(asctime)s - %(levelname)s - %(message)s"
     )
 
-    # Запуск Flask в отдельном потоке
+    # Запуск Flask
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
 
-    # Создание и настройка бота
-    application = ApplicationBuilder() \
-        .token(config.BOT_TOKEN) \
-        .post_init(post_init) \
-        .build()
-
-    # Регистрация обработчиков
+    # Telegram бот
+    application = ApplicationBuilder().token(config.BOT_TOKEN).build()
     handlers.register_handlers(application)
-
-    # Запуск бота с обработкой ошибок
-    try:
-        logging.info("Бот запущен...")
-        application.run_polling(
-            allowed_updates=Update.ALL_TYPES,
-            close_loop=False,
-            stop_signals=None
-        )
-    except Conflict as e:
-        logging.error(f"Конфликт: {e}. Возможно, бот уже запущен.")
-    except Exception as e:
-        logging.error(f"Ошибка: {e}")
+    
+    logging.info("Сервис запущен...")
+    application.run_polling()
 
 if __name__ == "__main__":
     main()

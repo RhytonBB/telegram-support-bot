@@ -328,4 +328,3 @@ function closeTicket(id) {
     renderTicketsList("archived");
     renderChatTabs();
   }
-  

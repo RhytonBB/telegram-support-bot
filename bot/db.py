@@ -1,11 +1,10 @@
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from .config import BASE_DIR
+from .config import BASE_URL
 
-DB_PATH = BASE_DIR / "database" / "support.db"
-UPLOADS_DIR = BASE_DIR / "uploads"
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH = Path(__file__).parent.parent / "database" / "support.db"
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -19,7 +18,7 @@ def init_db():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS tickets (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
+                user_id INTEGER NOT NULL,
                 status TEXT NOT NULL DEFAULT 'new',
                 created_at TEXT NOT NULL,
                 taken_by TEXT
@@ -32,7 +31,6 @@ def init_db():
                 ticket_id INTEGER NOT NULL,
                 sender TEXT NOT NULL,
                 content TEXT NOT NULL,
-                content_type TEXT NOT NULL,
                 timestamp TEXT NOT NULL,
                 FOREIGN KEY (ticket_id) REFERENCES tickets(id)
             );
@@ -40,7 +38,7 @@ def init_db():
 
         conn.commit()
 
-def create_ticket(user_id=None):
+def create_ticket(user_id: int) -> int:
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -50,48 +48,42 @@ def create_ticket(user_id=None):
         conn.commit()
         return cursor.lastrowid
 
+def get_archived_tickets(user_id: int) -> list[tuple[int, str]]:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id FROM tickets
+            WHERE user_id = ? AND status = 'archived'
+            ORDER BY created_at DESC
+        """, (user_id,))
+        rows = cursor.fetchall()
+        return [(row["id"], generate_chat_url(user_id, row["id"])) for row in rows]
+
+def generate_chat_url(user_id: int, ticket_id: int) -> str:
+    return f"{BASE_URL}/chat/?ticket_id={ticket_id}"
+
 def get_ticket_by_id(ticket_id):
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM tickets WHERE id = ?", (ticket_id,))
-        return cursor.fetchone()
+        row = cursor.fetchone()
+        return dict(row) if row else None
 
 def get_messages_by_ticket(ticket_id):
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, sender, content, content_type, timestamp 
-            FROM messages 
-            WHERE ticket_id = ? 
-            ORDER BY timestamp
+            SELECT sender, content, timestamp FROM messages
+            WHERE ticket_id = ? ORDER BY timestamp
         """, (ticket_id,))
-        
-        messages = []
-        for row in cursor.fetchall():
-            message = dict(row)
-            if row['content_type'] in ['image', 'video']:
-                message['content_url'] = f"/uploads/{row['content']}"
-            messages.append(message)
-            
-        return messages
+        rows = cursor.fetchall()
+        return [{"sender": r["sender"], "content": r["content"], "timestamp": r["timestamp"]} for r in rows]
 
-def save_message(ticket_id, sender, content, content_type):
+def save_message(ticket_id, sender, text):
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO messages 
-            (ticket_id, sender, content, content_type, timestamp)
-            VALUES (?, ?, ?, ?, ?)
-        """, (
-            ticket_id,
-            sender,
-            content,
-            content_type,
-            datetime.utcnow().isoformat()
-        ))
+        cursor.execute(
+            "INSERT INTO messages (ticket_id, sender, content, timestamp) VALUES (?, ?, ?, ?)",
+            (ticket_id, sender or "user", text, datetime.utcnow().isoformat())
+        )
         conn.commit()
-
-def generate_chat_url(ticket_id):
-    """Генерирует URL для чата с поддержкой"""
-    from .config import BASE_URL
-    return f"{BASE_URL}/chat/?ticket_id={ticket_id}"

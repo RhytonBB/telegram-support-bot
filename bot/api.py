@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify, abort, send_from_directory
+from flask import Flask, request, jsonify, abort
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from . import db
@@ -13,8 +13,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/api/messages/<int:ticket_id>", methods=["GET"])
 def get_messages(ticket_id):
@@ -58,7 +57,7 @@ def post_message(ticket_id):
             db.save_message(
                 ticket_id=ticket_id,
                 sender="user",
-                content=filename,  # Сохраняем имя файла
+                content=filename,
                 content_type=content_type
             )
             
@@ -73,12 +72,3 @@ def post_message(ticket_id):
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-@app.route("/api/tickets", methods=["POST"])
-def create_ticket():
-    ticket_id = db.create_ticket(user_id=None)  # user_id=None для анонимных обращений
-    return jsonify({
-        "status": "ok",
-        "ticket_id": ticket_id,
-        "chat_url": f"/chat/?ticket_id={ticket_id}"
-    }), 201
