@@ -100,6 +100,15 @@ def main():
     logging.info("Бот запущен...")
     app.run_polling()
 
+@app.route("/api/tickets")
+def api_get_tickets():
+    status = request.args.get("status", "new")
+    if status not in {"new", "active", "archived"}:
+        return jsonify([])
+
+    rows = db.get_tickets_by_status(status)
+    return jsonify(rows)
+
 
 if __name__ == "__main__":
     main()

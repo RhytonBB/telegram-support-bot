@@ -88,3 +88,14 @@ def save_message(ticket_id, sender, text):
             (ticket_id, sender or "user", text, datetime.utcnow().isoformat())
         )
         conn.commit()
+
+def get_tickets_by_status(status):
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, user_id, created_at
+            FROM tickets
+            WHERE status = ?
+            ORDER BY created_at DESC
+        """, (status,))
+        return [dict(row) for row in cursor.fetchall()]

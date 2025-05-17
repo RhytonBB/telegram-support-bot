@@ -21,13 +21,14 @@ if (loginForm) {
   });
 }
 
-// --- ПАНЕЛЬ ОПЕРАТОРА ---
+// --- ОХРАНА ДОСТУПА НА СТРАНИЦЕ ОПЕРАТОРА ---
 if (window.location.pathname.endsWith("operators.html")) {
   if (sessionStorage.getItem("operatorAuth") !== "true") {
     window.location.href = "index.html";
   }
 }
 
+// --- ЛОГАУТ ---
 const logoutBtn = document.getElementById("logout-btn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
@@ -36,7 +37,7 @@ if (logoutBtn) {
   });
 }
 
-// Вкладки
+// --- ВКЛАДКИ ---
 const tabButtons = document.querySelectorAll(".tab-btn");
 const tabContents = document.querySelectorAll(".tab-content");
 
@@ -50,7 +51,7 @@ tabButtons.forEach(btn =>
   })
 );
 
-// --- Моковые данные обращений ---
+// --- МОКОВЫЕ ДАННЫЕ ОБРАЩЕНИЙ ---
 const tickets = {
   new: [
     {
@@ -61,7 +62,7 @@ const tickets = {
         { sender: "user", type: "text", text: "Здравствуйте" },
         { sender: "user", type: "image", url: "https://via.placeholder.com/150" },
         { sender: "user", type: "video", url: "https://sample-videos.com/video123/mp4/240/big_buck_bunny_240p_1mb.mp4" }
-      ],
+      ]
     },
     {
       id: 2,
@@ -74,12 +75,13 @@ const tickets = {
   archived: []
 };
 
-// Открытые чаты с состоянием свернутости
+// --- СОСТОЯНИЕ ОТКРЫТЫХ ЧАТОВ ---
 let openChats = [];
 
-// Отрисовка списков обращений
+// --- ОТРИСОВКА СПИСКОВ ОБРАЩЕНИЙ ---
 function renderTicketsList(status) {
   const listEl = document.getElementById(`${status}-tickets-list`);
+  if (!listEl) return;
   listEl.innerHTML = "";
 
   tickets[status].forEach(ticket => {
@@ -91,7 +93,7 @@ function renderTicketsList(status) {
   });
 }
 
-// Открыть чат по ID обращения
+// --- ОТКРЫТИЕ ЧАТА ---
 function openChat(id) {
   if (openChats.find(c => c.id === id)) {
     activateChat(id);
@@ -106,7 +108,6 @@ function openChat(id) {
 
   if (!ticket) return alert("Обращение не найдено");
 
-  // Если из новых — переместить в активные
   if (tickets.new.find(t => t.id === id)) {
     tickets.new = tickets.new.filter(t => t.id !== id);
     ticket.status = "active";
@@ -123,17 +124,17 @@ function openChat(id) {
   activateChat(id);
 }
 
-// Активировать чат — показать его окно и выделить вкладку
+// --- АКТИВАЦИЯ ЧАТА ---
 function activateChat(id) {
   document.querySelectorAll("#chat-tabs .chat-tab").forEach(tab => {
-    tab.classList.toggle("active", tab.dataset.id == id);
+    tab.classList.toggle("active", parseInt(tab.dataset.id) === id);
   });
   document.querySelectorAll("#chat-windows .chat-window").forEach(win => {
-    win.classList.toggle("active", win.dataset.id == id);
+    win.classList.toggle("active", parseInt(win.dataset.id) === id);
   });
 }
 
-// Отрисовка вкладок открытых чатов
+// --- ОТРИСОВКА ВКЛАДОК И ОКОН ---
 function renderChatTabs() {
   const tabsContainer = document.getElementById("chat-tabs");
   tabsContainer.innerHTML = "";
@@ -149,14 +150,12 @@ function renderChatTabs() {
     if (id === getActiveChatId()) tab.classList.add("active");
 
     tab.addEventListener("click", () => activateChat(id));
-
     tabsContainer.appendChild(tab);
   });
 
   renderChatWindows();
 }
 
-// Найти обращение по ID в любых статусах
 function findTicketById(id) {
   let ticket;
   ["new", "active", "archived"].some(status => {
@@ -166,7 +165,6 @@ function findTicketById(id) {
   return ticket;
 }
 
-// Отрисовка окон чатов
 function renderChatWindows() {
   const container = document.getElementById("chat-windows");
   container.innerHTML = "";
@@ -178,24 +176,21 @@ function renderChatWindows() {
     const chatDiv = document.createElement("div");
     chatDiv.className = "chat-window" + (id === getActiveChatId() ? " active" : "");
     chatDiv.dataset.id = id;
+    chatDiv.style.display = minimized ? "none" : "flex";
 
-    // Контролы чата
     const controls = document.createElement("div");
     controls.className = "chat-controls";
 
-    // Кнопка "Временно закрыть чат"
     const btnMinimize = document.createElement("button");
     btnMinimize.textContent = minimized ? "Развернуть чат" : "Временно закрыть чат";
     btnMinimize.addEventListener("click", () => toggleMinimizeChat(id));
     controls.appendChild(btnMinimize);
 
-    // Кнопка "Закрыть обращение"
     const btnClose = document.createElement("button");
     btnClose.textContent = "Закрыть обращение";
     btnClose.addEventListener("click", () => closeTicket(id));
     controls.appendChild(btnClose);
 
-    // Кнопка "Передать партнеру" (заглушка)
     const btnTransfer = document.createElement("button");
     btnTransfer.textContent = "Передать партнеру";
     btnTransfer.disabled = true;
@@ -203,7 +198,6 @@ function renderChatWindows() {
 
     chatDiv.appendChild(controls);
 
-    // Сообщения
     const messagesDiv = document.createElement("div");
     messagesDiv.className = "chat-messages";
 
@@ -232,7 +226,6 @@ function renderChatWindows() {
 
     chatDiv.appendChild(messagesDiv);
 
-    // Форма отправки сообщений (текст)
     const inputDiv = document.createElement("div");
     inputDiv.className = "chat-input";
 
@@ -246,21 +239,16 @@ function renderChatWindows() {
     inputDiv.appendChild(sendBtn);
 
     chatDiv.appendChild(inputDiv);
-
-    // Если чат свернут — скрываем окно
-    chatDiv.style.display = minimized ? "none" : "flex";
-
     container.appendChild(chatDiv);
   });
 }
 
-// Получить ID активного чата
+// --- УТИЛИТЫ ---
 function getActiveChatId() {
   const activeTab = document.querySelector("#chat-tabs .chat-tab.active");
   return activeTab ? parseInt(activeTab.dataset.id) : null;
 }
 
-// Переключить сворачивание чата
 function toggleMinimizeChat(id) {
   openChats = openChats.map(c => {
     if (c.id === id) c.minimized = !c.minimized;
@@ -269,62 +257,51 @@ function toggleMinimizeChat(id) {
   renderChatTabs();
 }
 
-// Закрыть обращение (переместить в архив)
 function closeTicket(id) {
-    // Найти обращение в активных
-    const idx = tickets.active.findIndex(t => t.id === id);
-    if (idx === -1) return; // если не найдено - выходим
-  
-    // Удаляем обращение из активных
-    const ticket = tickets.active.splice(idx, 1)[0];
-    ticket.status = "archived";
-  
-    // Добавляем обращение в архив
-    tickets.archived.push(ticket);
-  
-    // Удаляем чат из открытых (если открыт)
-    openChats = openChats.filter(c => c.id !== id);
-  
-    // Перерисовываем списки обращений и вкладки
-    renderTicketsList("new");
-    renderTicketsList("active");
-    renderTicketsList("archived");
-    renderChatTabs();
-  
-    // Если закрытый чат был активным, переключаем активный чат на первый открытый (если есть)
-    const activeChatId = getActiveChatId();
-    if (activeChatId === id && openChats.length > 0) {
-      activateChat(openChats[0].id);
-    } else if (openChats.length === 0) {
-      // Нет открытых чатов — очистить область чата
-      const container = document.getElementById("chat-windows");
-      container.innerHTML = "";
-      const tabsContainer = document.getElementById("chat-tabs");
-      tabsContainer.innerHTML = "";
-    }
-  }
-  
-  function sendMessage(id, text) {
-    if (!text.trim()) return;
-  
-    const ticket = findTicketById(id);
-    if (!ticket) return;
-  
-    ticket.messages.push({ sender: "operator", type: "text", text: text.trim() });
-  
-    renderChatWindows();
-  
-    // Очистить поле ввода в соответствующем чате
-    const chatWindow = document.querySelector(`.chat-window[data-id='${id}']`);
-    if (chatWindow) {
-      const textarea = chatWindow.querySelector("textarea");
-      textarea.value = "";
-    }
-  }
+  const idx = tickets.active.findIndex(t => t.id === id);
+  if (idx === -1) return;
 
-  if (window.location.pathname.endsWith("operators.html")) {
-    renderTicketsList("new");
-    renderTicketsList("active");
-    renderTicketsList("archived");
-    renderChatTabs();
+  const ticket = tickets.active.splice(idx, 1)[0];
+  ticket.status = "archived";
+  tickets.archived.push(ticket);
+
+  openChats = openChats.filter(c => c.id !== id);
+
+  renderTicketsList("new");
+  renderTicketsList("active");
+  renderTicketsList("archived");
+  renderChatTabs();
+
+  const currentActiveId = getActiveChatId();
+  if (currentActiveId === id && openChats.length > 0) {
+    activateChat(openChats[0].id);
+  } else if (openChats.length === 0) {
+    document.getElementById("chat-windows").innerHTML = "";
+    document.getElementById("chat-tabs").innerHTML = "";
   }
+}
+
+function sendMessage(id, text) {
+  if (!text.trim()) return;
+
+  const ticket = findTicketById(id);
+  if (!ticket) return;
+
+  ticket.messages.push({ sender: "operator", type: "text", text: text.trim() });
+
+  renderChatWindows();
+
+  const chatWindow = document.querySelector(`.chat-window[data-id='${id}']`);
+  if (chatWindow) {
+    const textarea = chatWindow.querySelector("textarea");
+    textarea.value = "";
+  }
+}
+
+// --- ИНИЦИАЛИЗАЦИЯ ---
+if (window.location.pathname.endsWith("operators.html")) {
+  renderTicketsList("new");
+  renderTicketsList("active");
+  renderTicketsList("archived");
+  renderChatTabs();
+}
