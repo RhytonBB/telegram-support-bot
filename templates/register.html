@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block content %}
+<h2>Регистрация исполнителя</h2>
+<form method="POST">
+    {{ form.hidden_tag() }}
+    {{ form.last_name.label }} {{ form.last_name(size=32) }}<br>
+    {{ form.first_name.label }} {{ form.first_name(size=32) }}<br>
+    {{ form.middle_name.label }} {{ form.middle_name(size=32) }}<br>
+    {{ form.passport.label }} {{ form.passport(size=32) }}<br>
+    {{ form.inn.label }} {{ form.inn(size=32) }}<br>
+    {{ form.company.label }} {{ form.company(size=32) }}<br>
+    {{ form.phone.label }} {{ form.phone(size=32) }}<br>
+    {{ form.telegram_nick.label }} {{ form.telegram_nick(size=32) }}<br>
+    {{ form.submit() }}
+</form>
+{% endblock %}
