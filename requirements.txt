@@ -4,3 +4,4 @@ flask-wtf
 flask-sqlalchemy
 psycopg2-binary
 gunicorn
+python-dotenv
