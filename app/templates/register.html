@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+{% endblock %}
+{% block content %}
+<div class="auth-card">
+    <div class="auth-header">
+        <h2> Регистрация исполнителя</h2>
+    </div>
+
+    <form method="POST" class="auth-form">
+        {{ form.hidden_tag() }}
+
+        <div class="form-row">
+            <div class="form-group">
+                {{ form.last_name.label(class="form-label") }}
+                <div class="input-wrapper">
+                    {{ form.last_name(size=32, class="form-input", placeholder="Фамилия") }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form.first_name.label(class="form-label") }}
+                <div class="input-wrapper">
+                    {{ form.first_name(size=32, class="form-input", placeholder="Имя") }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            {{ form.middle_name.label(class="form-label") }}
+            <div class="input-wrapper">
+                {{ form.middle_name(size=32, class="form-input", placeholder="Отчество") }}
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                {{ form.passport.label(class="form-label") }}
+                <div class="input-wrapper">
+                    {{ form.passport(size=32, class="form-input", placeholder="Серия и номер") }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form.inn.label(class="form-label") }}
+                <div class="input-wrapper">
+                    {{ form.inn(size=32, class="form-input", placeholder="ИНН") }}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            {{ form.company.label(class="form-label") }}
+            <div class="input-wrapper">
+                {{ form.company(size=32, class="form-input", placeholder="Компания") }}
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                {{ form.phone.label(class="form-label") }}
+                <div class="input-wrapper">
+                    {{ form.phone(size=32, class="form-input", placeholder="+7 (XXX) XXX-XX-XX") }}
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form.telegram_nick.label(class="form-label") }}
+                <div class="input-wrapper">
+                    {{ form.telegram_nick(size=32, class="form-input", placeholder="username без @") }}
+                </div>
+            </div>
+        </div>
+
+        {{ form.submit(class="auth-button") }}
+    </form>
+</div>
+{% endblock %}
