@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash, current_app, request
 from flask_login import login_required
-from .forms import ExecutorForm
-from .models import Executor
+from .forms import ExecutorForm, OrderForm
+from .models import Executor, Order, Worker
 from . import db
 import secrets
 
@@ -34,3 +34,40 @@ def register_executor():
         flash(f"Исполнитель зарегистрирован. Ключ доступа: {access_key}", "success")
         return redirect(url_for("views.register_executor"))
     return render_template("register.html", form=form)
+
+@views_bp.route("/create-order", methods=["GET", "POST"])
+@login_required
+def create_order():
+    # Проверяем наличие исполнителей в базе
+    executors = Executor.query.all()
+    current_app.logger.info(f"Total executors in database: {len(executors)}")
+    for executor in executors:
+        current_app.logger.info(f"Executor: {executor.last_name} {executor.first_name} ({executor.telegram_nick})")
+
+    form = OrderForm()
+    if form.validate_on_submit():
+        order = Order(
+            telegram_nick=form.executor.data,
+            title=form.title.data,
+            description=form.description.data,
+            photo_file_id=None,
+            status='active'
+        )
+        db.session.add(order)
+        db.session.commit()
+        flash("Заказ успешно создан", "success")
+        return redirect(url_for("views.create_order"))
+    return render_template("create_order.html", form=form)
+
+
+@views_bp.route("/executors")
+@login_required
+def view_executors():
+    executors = Executor.query.all()
+    return render_template("executors.html", executors=executors)
+
+@views_bp.route("/workers")
+@login_required
+def view_workers():
+    workers = Worker.query.all()
+    return render_template("workers.html", workers=workers)

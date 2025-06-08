@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block styles %}
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        font-size: 15px;
+    }
+
+    th, td {
+        padding: 10px;
+        border: 1px solid #ccc;
+        text-align: left;
+    }
+
+    th {
+        background-color: #f5f5f5;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    h2 {
+        margin-top: 30px;
+        text-align: center;
+    }
+
+    a.button-back {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 8px 16px;
+        background-color: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+    }
+
+    a.button-back:hover {
+        background-color: #2980b9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Список сотрудников</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>ФИО</th>
+                <th>Telegram Ник</th>
+                <th>Telegram ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for worker in workers %}
+            <tr>
+                <td>{{ worker.id }}</td>
+                <td>{{ worker.full_name}}</td>
+                <td>@{{ worker.telegram_nick }}</td>
+                <td>{{ worker.telegram_id or "—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('views.register_executor') }}" class="button-back">← Назад</a>
+</div>
+{% endblock %}

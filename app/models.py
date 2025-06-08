@@ -1,6 +1,9 @@
 from . import db
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
+
+def moscow_now():
+    return datetime.utcnow() + timedelta(hours=3)
 
 class AdminUser(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -33,7 +36,7 @@ class Worker(db.Model):
     phone = db.Column(db.String(32))
     is_blocked = db.Column(db.Boolean, default=False)
     fail_attempts = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=moscow_now)
 
 
 class Order(db.Model):
@@ -45,8 +48,11 @@ class Order(db.Model):
     title = db.Column(db.String(128), nullable=False)
     description = db.Column(db.Text, nullable=True)
     photo_file_id = db.Column(db.String(256), nullable=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
+    address = db.Column(db.String(256), nullable=True)
     status = db.Column(db.String(16), nullable=False, default='active')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=moscow_now)
     completed_at = db.Column(db.DateTime, nullable=True)
 
     __table_args__ = (

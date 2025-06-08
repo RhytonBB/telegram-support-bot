@@ -75,5 +75,10 @@
 
         {{ form.submit(class="auth-button") }}
     </form>
+
+    <div class="auth-links" style="margin-top: 20px; display: flex; gap: 10px;">
+        <a href="{{ url_for('views.view_executors') }}" class="auth-button" style="text-align: center;">Список исполнителей</a>
+        <a href="{{ url_for('views.view_workers') }}" class="auth-button" style="text-align: center;">Список сотрудников</a>
+    </div>
 </div>
 {% endblock %}
